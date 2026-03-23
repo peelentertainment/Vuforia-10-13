@@ -20,7 +20,7 @@ The URL to add is
 git+https://git-packages.developer.vuforia.com/#9.6.3
 ```
 where the number after # represents the Vuforia Engine version you wish to import.
-Note: There is no visual feedback in the Unity Editor while the package is being imported in the background.
+Note: There is no visual feedback in the Unity Editor while the package  is being imported in the background.
 
 Finally, you can directly add the dependency to your project by editing the *manifest.json* in your project’s *Packages* folder, adding an entry for “dependencies” with a # tag for the version you wish to import:
 ```json
