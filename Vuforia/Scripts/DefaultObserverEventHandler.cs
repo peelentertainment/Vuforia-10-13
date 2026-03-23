@@ -7,6 +7,8 @@ countries.
 ==============================================================================*/
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using Vuforia;
@@ -37,8 +39,8 @@ public class DefaultObserverEventHandler : MonoBehaviour
     public bool UsePoseSmoothing = false;
     public AnimationCurve AnimationCurve = AnimationCurve.Linear(0, 0, LERP_DURATION, 1);
     
-    public UnityEvent OnTargetFound;
-    public UnityEvent OnTargetLost;
+    public UnityEvent OnTargetFound = new();
+    public UnityEvent OnTargetLost = new();
 
 
     protected ObserverBehaviour mObserverBehaviour;
@@ -161,27 +163,12 @@ public class DefaultObserverEventHandler : MonoBehaviour
 
         return false;
     }
-
+    
+    
     protected virtual void OnTrackingFound()
     {
         if (mObserverBehaviour)
-        {
-            var rendererComponents = mObserverBehaviour.GetComponentsInChildren<Renderer>(true);
-            var colliderComponents = mObserverBehaviour.GetComponentsInChildren<Collider>(true);
-            var canvasComponents = mObserverBehaviour.GetComponentsInChildren<Canvas>(true);
-
-            // Enable rendering:
-            foreach (var component in rendererComponents)
-                component.enabled = true;
-
-            // Enable colliders:
-            foreach (var component in colliderComponents)
-                component.enabled = true;
-
-            // Enable canvas':
-            foreach (var component in canvasComponents)
-                component.enabled = true;
-        }
+            SetComponentsEnabled(true);
 
         OnTargetFound?.Invoke();
     }
@@ -189,23 +176,7 @@ public class DefaultObserverEventHandler : MonoBehaviour
     protected virtual void OnTrackingLost()
     {
         if (mObserverBehaviour)
-        {
-            var rendererComponents = mObserverBehaviour.GetComponentsInChildren<Renderer>(true);
-            var colliderComponents = mObserverBehaviour.GetComponentsInChildren<Collider>(true);
-            var canvasComponents = mObserverBehaviour.GetComponentsInChildren<Canvas>(true);
-
-            // Disable rendering:
-            foreach (var component in rendererComponents)
-                component.enabled = false;
-
-            // Disable colliders:
-            foreach (var component in colliderComponents)
-                component.enabled = false;
-
-            // Disable canvas':
-            foreach (var component in canvasComponents)
-                component.enabled = false;
-        }
+            SetComponentsEnabled(false);
 
         OnTargetLost?.Invoke();
     }
@@ -222,6 +193,29 @@ public class DefaultObserverEventHandler : MonoBehaviour
     {
         if (enabled && UsePoseSmoothing)
             mPoseSmoother.Update();
+    }
+
+    void SetComponentsEnabled(bool enable)
+    {
+        var components = VuforiaRuntimeUtilities.GetComponentsInChildrenExcluding<Component, DefaultObserverEventHandler>(gameObject);
+        foreach (var component in components)
+        {
+            switch (component)
+            {
+                case Renderer rendererComponent:
+                    rendererComponent.enabled = enable;
+                    break;
+                case Collider colliderComponent:
+                    colliderComponent.enabled = enable;
+                    break;
+                case Canvas canvasComponent:
+                    canvasComponent.enabled = enable;
+                    break;
+                case RuntimeMeshRenderingBehaviour runtimeMeshComponent:
+                    runtimeMeshComponent.enabled = enable;
+                    break;
+            }
+        }
     }
 
     class PoseSmoother
