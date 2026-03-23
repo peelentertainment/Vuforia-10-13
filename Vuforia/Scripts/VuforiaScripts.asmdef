@@ -4,24 +4,27 @@
     "references": [
         "Unity.XR.ARFoundation",
         "Unity.XR.ARSubsystems",
+        "Unity.XR.WindowsMixedReality",
         "Microsoft.MixedReality.OpenXR",
         "Unity.XR.Management",
         "Unity.XR.CoreUtils",
         "UnityEngine.XR.MagicLeap",
-        "LuminUnity",
-        "Unity.RenderPipelines.Universal.Runtime",
-        "Unity.XR.OpenXR",
-        "Unity.InputSystem"
+        "LuminUnity"
     ],
-    "includePlatforms": [
-        "Android",
-        "Editor",
-        "iOS",
-        "macOSStandalone",
-        "WSA",
-        "WindowsStandalone64"
+    "includePlatforms": [],
+    "excludePlatforms": [
+        "CloudRendering",
+        "GameCoreScarlett",
+        "GameCoreXboxOne",
+        "LinuxStandalone64",
+        "PS4",
+        "PS5",
+        "Stadia",
+        "Switch",
+        "tvOS",
+        "WebGL",
+        "XboxOne"
     ],
-    "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
@@ -31,27 +34,22 @@
         {
             "name": "com.unity.xr.arfoundation",
             "expression": "4.0.0",
-            "define": "UNITY_XR_ARFOUNDATION"
+            "define": "ARFOUNDATION_DEFINED"
+        },
+        {
+            "name": "com.unity.xr.windowsmr",
+            "expression": "1.0.0",
+            "define": "WINDOWS_XR_ENABLED"
         },
         {
             "name": "com.microsoft.mixedreality.openxr",
             "expression": "0.0.0",
-            "define": "MICROSOFT_MIXEDREALITY_OPENXR"
+            "define": "OPEN_XR_ENABLED"
         },
         {
             "name": "com.magicleap.unitysdk",
             "expression": "0.0.0",
-            "define": "MAGICLEAP_UNITYSDK"
-        },
-        {
-            "name": "com.unity.render-pipelines.universal",
-            "expression": "0.0.0",
-            "define": "UNITY_RENDER_PIPELINES_UNIVERSAL"
-        },
-        {
-            "name": "com.unity.xr.openxr",
-            "expression": "0.0.0",
-            "define": "UNITY_XR_OPENXR"
+            "define": "ML_UNITYSDK_ENABLED"
         }
     ],
     "noEngineReferences": false

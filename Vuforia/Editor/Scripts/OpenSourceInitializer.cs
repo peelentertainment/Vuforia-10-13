@@ -1,6 +1,5 @@
 /*===============================================================================
-Copyright (c) 2017-2024 PTC Inc. and/or Its Subsidiary Companies.
-All Rights Reserved.
+Copyright (c) 2017-2019 PTC Inc. All Rights Reserved.
 
 Confidential and Proprietary - Protected under copyright and other laws.
 Vuforia is a trademark of PTC Inc., registered in the United States and other 
@@ -12,10 +11,6 @@ using UnityEngine.XR;
 #if UNITY_XR_MANAGEMENT
 using UnityEditor.XR.Management;
 using UnityEngine.XR.Management;
-using Unity.XR.CoreUtils;
-#endif
-#if UNITY_XR_OPENXR
-using UnityEditor.XR.OpenXR.Features;
 #endif
 using System.Linq;
 using UnityEditor;
@@ -39,12 +34,13 @@ public static class OpenSourceInitializer
         ReplacePlaceHolders();
 
         InitializeFacade();
+        ARFoundationInitializer.InitializeFacade();
     }
 
     static void ReplacePlaceHolders()
     {
-        var observerPlaceholders = Object.FindObjectsByType<DefaultObserverBehaviourPlaceholder>(FindObjectsSortMode.None).ToList();
-        var initErrorsPlaceholders = Object.FindObjectsByType<DefaultInitializationErrorHandlerPlaceHolder>(FindObjectsSortMode.None).ToList();
+        var observerPlaceholders = Object.FindObjectsOfType<DefaultObserverBehaviourPlaceholder>().ToList();
+        var initErrorsPlaceholders = Object.FindObjectsOfType<DefaultInitializationErrorHandlerPlaceHolder>().ToList();
 
         observerPlaceholders.ForEach(ReplaceObserverPlaceHolder);
         initErrorsPlaceholders.ForEach(ReplaceInitErrorPlaceHolder);
@@ -80,12 +76,6 @@ public static class OpenSourceInitializer
             var eventHandler = go.AddComponent<DefaultAreaTargetEventHandler>();
             SetDefaultObserverHandlerSettings(eventHandler);
         }
-
-        public void AddDefaultValidationEventHandler(GameObject go)
-        {
-            var dteh = go.AddComponent<DefaultValidationEventHandler>();
-            SetDefaultObserverHandlerSettings(dteh);
-        }
         
         public void AddDefaultInitializationErrorHandler(GameObject go)
         {
@@ -117,26 +107,23 @@ public static class OpenSourceInitializer
 
     class OpenSourceUnityEditorFacade : IUnityEditorFacade
     {
-        public bool IsNewInputSystemEnabled()
-        {
-#if ENABLE_INPUT_SYSTEM
-            return true;
-#else 
-            return false;
-#endif
-        }
-
         public bool IsTargetingHoloLens()
         {
             if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.WSAPlayer)
                 return false;
-#if UNITY_XR_OPENXR
-            const string HOLOLENS_FEATURE_SET_ID = "com.microsoft.openxr.featureset.hololens";
-            var featureSets = OpenXRFeatureSetManager.FeatureSetsForBuildTarget(BuildTargetGroup.WSA);
-            var hlFeatureSet = featureSets.First(fs => fs.featureSetId.Equals(HOLOLENS_FEATURE_SET_ID));
-
-            return hlFeatureSet.isEnabled;
+#if UNITY_2020_1_OR_NEWER
+            const string UNITY_WINDOWSMR_IDENTIFIER = "Windows Mixed Reality";
+            return XRSettings.supportedDevices.Any(xrDevice => xrDevice.Contains(UNITY_WINDOWSMR_IDENTIFIER));
 #else
+            const string UNITY_WINDOWSMR_IDENTIFIER = "WindowsMR";
+            if (!PlayerSettings.GetVirtualRealitySupported(BuildTargetGroup.WSA)) return false;
+            foreach (var vrSdkName in PlayerSettings.GetVirtualRealitySDKs(BuildTargetGroup.WSA))
+            {
+                if (vrSdkName.Equals(UNITY_WINDOWSMR_IDENTIFIER))
+                {
+                    return true;
+                }
+            }
             return false;
 #endif
         }
@@ -144,15 +131,6 @@ public static class OpenSourceInitializer
         public bool IsMagicLeapEnabled()
         {
             return PlatformIdentifier.IsMagicLeapXREnabled();
-        }
-
-        public bool IsAndroidSplitApplicationBinaryEnabled()
-        {
-#if UNITY_6000_0_OR_NEWER
-            return PlayerSettings.Android.splitApplicationBinary;
-#else
-            return PlayerSettings.Android.useAPKExpansionFiles;
-#endif
         }
     }
 

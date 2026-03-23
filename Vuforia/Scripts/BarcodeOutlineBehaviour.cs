@@ -6,7 +6,8 @@ Vuforia is a trademark of PTC Inc., registered in the United States and other
 countries.
 ===============================================================================*/
 
-using System;
+using System.IO;
+using UnityEditor.Experimental;
 using UnityEngine;
 using Vuforia;
 
@@ -15,14 +16,14 @@ using Vuforia;
 /// </summary>
 public class BarcodeOutlineBehaviour : MonoBehaviour
 {
-    [Obsolete("The Material field is deprecated and will be removed in an upcoming Vuforia release. Please use Materials instead.")]
-    [Tooltip("The Material field is deprecated and will be removed in an upcoming Vuforia release. Please use Materials instead.")]
     [SerializeField] public Material Material;
-    [SerializeField] public Material[] Materials;
+
     [SerializeField] public float OutlineThickness = 5;
 
     BarcodeBehaviour mBarcodeBehaviour;
+
     GameObject[] mLines;
+
     GameObject[] mCorners;
 
     /// <summary>
@@ -31,11 +32,10 @@ public class BarcodeOutlineBehaviour : MonoBehaviour
     /// </summary>
     void Reset()
     {
-        Materials = VuforiaConfiguration.Instance.RuntimeResources.Register.BarcodeOutlineMaterials;
-#pragma warning disable CS0618 // Type or member is obsolete
-        Material = Materials[0];
-#pragma warning restore CS0618 // Type or member is obsolete
+#if UNITY_EDITOR
+        Material = EditorResources.Load<Material>("Packages/com.ptc.vuforia.engine/Vuforia/Materials/BarcodeOutlineMaterial.mat");
         OutlineThickness = 5;
+#endif
     }
     
     /// <summary>
@@ -47,36 +47,6 @@ public class BarcodeOutlineBehaviour : MonoBehaviour
         if (mBarcodeBehaviour != null)
         {
             mBarcodeBehaviour.OnBarcodeOutlineChanged += OnBarcodeOutlineChanged;
-        }
-    }
-
-    void OnValidate()
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        if ((Materials == null || Materials.Length == 0) && Material != null)
-            Materials = new[] { Material };
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
-    void OnEnable()
-    {
-#pragma warning disable CS0618 // Type or member is obsolete
-        if ((Materials == null || Materials.Length == 0) && Material != null)
-        {
-            Debug.LogWarning("The Material field is deprecated and will be removed in an upcoming Vuforia release. Please use Materials instead.");
-            Materials = new[] { Material };
-        }
-#pragma warning restore CS0618 // Type or member is obsolete
-    }
-
-    /// <summary>
-    /// Called when the script is destroyed
-    /// </summary>
-    void OnDestroy()
-    {
-        if (mBarcodeBehaviour != null)
-        {
-            mBarcodeBehaviour.OnBarcodeOutlineChanged -= OnBarcodeOutlineChanged;
         }
     }
 
@@ -109,7 +79,7 @@ public class BarcodeOutlineBehaviour : MonoBehaviour
                 go.transform.localPosition = Vector3.zero;
                 go.transform.localScale = Vector3.one;
                 go.transform.localRotation = Quaternion.identity;
-                go.GetComponent<MeshRenderer>().sharedMaterials = Materials;
+                go.GetComponent<MeshRenderer>().material = Material;
 
                 Destroy(go.GetComponent<Collider>());
             }
@@ -128,7 +98,7 @@ public class BarcodeOutlineBehaviour : MonoBehaviour
                 go.transform.localPosition = Vector3.zero;
                 go.transform.localScale = Vector3.one;
                 go.transform.localRotation = Quaternion.identity;
-                go.GetComponent<MeshRenderer>().sharedMaterials = Materials;
+                go.GetComponent<MeshRenderer>().material = Material;
 
                 Destroy(go.GetComponent<Collider>());
             }

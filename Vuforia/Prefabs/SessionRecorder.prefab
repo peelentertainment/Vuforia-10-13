@@ -1217,10 +1217,10 @@ MonoBehaviour:
   ShowCleanButton: 1
   EnableSharing: 1
   RecordSensorsData: 1
-  OnStartRecording:
+  OnRecordingStarted:
     m_PersistentCalls:
       m_Calls: []
-  OnStopRecording:
+  OnRecordingStopped:
     m_PersistentCalls:
       m_Calls: []
   OnStorageCleaned:

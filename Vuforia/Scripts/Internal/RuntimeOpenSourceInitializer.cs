@@ -1,12 +1,12 @@
 /*===============================================================================
-Copyright (c) 2025 PTC Inc. and/or Its Subsidiary Companies. All Rights Reserved.
+Copyright (c) 2019 PTC Inc. All Rights Reserved.
 
 Confidential and Proprietary - Protected under copyright and other laws.
 Vuforia is a trademark of PTC Inc., registered in the United States and other 
 countries.
 ===============================================================================*/
 
-#if UNITY_WSA && !UNITY_EDITOR
+#if !UNITY_EDITOR && UNITY_WSA
 #define RUNTIME_WSA
 #endif
 
@@ -15,40 +15,25 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Rendering;
 using Vuforia.Internal.Core;
 using Object = UnityEngine.Object;
-
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
-
 #if PLATFORM_ANDROID
 using UnityEngine.Android;
 #endif
 
-#if UNITY_XR_OPENXR
+#if RUNTIME_WSA && (WINDOWS_XR_ENABLED || OPEN_XR_ENABLED)
 using UnityEngine.XR;
-using UnityEngine.XR.Management;
-using Unity.XR.CoreUtils;
 #endif
 
-#if UNITY_XR_OPENXR
-using UnityEngine.XR.OpenXR;
-#endif
-
-#if MICROSOFT_MIXEDREALITY_OPENXR
+#if RUNTIME_WSA && OPEN_XR_ENABLED
 using Microsoft.MixedReality.OpenXR;
+using UnityEngine.XR.Management;
 #endif
 
-#if PLATFORM_LUMIN && MAGICLEAP_UNITYSDK
+#if PLATFORM_LUMIN && ML_UNITYSDK_ENABLED
 using UnityEngine.XR.MagicLeap;
 using System.Linq;
-#endif
-
-#if UNITY_RENDER_PIPELINES_UNIVERSAL
-using UnityEngine.Rendering.Universal;
-#endif
+#endif 
 
 namespace Vuforia.UnityRuntimeCompiled
 {
@@ -72,11 +57,18 @@ namespace Vuforia.UnityRuntimeCompiled
         
         class OpenSourceUnityRuntimeCompiledFacade : IUnityRuntimeCompiledFacade
         {
-            public IUnityInputBridge UnityInputBridge { get; } = new UnityInputBridge();
+            readonly IUnityRenderPipeline mUnityRenderPipeline = new UnityRenderPipeline();
+            readonly IUnityXRBridge mUnityXRBridge = new UnityXRBridge();
 
-            public IUnityRenderPipeline UnityRenderPipeline { get; } = new UnityRenderPipeline();
+            public IUnityRenderPipeline UnityRenderPipeline
+            {
+                get { return mUnityRenderPipeline; }
+            }
 
-            public IUnityXRBridge UnityXRBridge { get; } = new UnityXRBridge();
+            public IUnityXRBridge UnityXRBridge
+            {
+                get { return mUnityXRBridge; }
+            }
 
             public bool IsUnityUICurrentlySelected()
             {
@@ -85,78 +77,53 @@ namespace Vuforia.UnityRuntimeCompiled
 
             public Font GetDefaultFont()
             {
+#if UNITY_2022_2_OR_NEWER
                 return Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            }
-        }
-        
-        class UnityInputBridge : IUnityInputBridge
-        {
-            public bool IsNewInputSystemEnabled()
-            {
-#if ENABLE_INPUT_SYSTEM
-                return true;
 #else
-                return false;
+                return Resources.GetBuiltinResource<Font>("Arial.ttf");
 #endif
             }
         }
 
         class UnityRenderPipeline : IUnityRenderPipeline
         {
-            public event Action<List<Camera>> BeginFrameRendering;
+            public event Action<Camera[]> BeginFrameRendering;
             public event Action<Camera> BeginCameraRendering;
 
             public UnityRenderPipeline()
             {
-                RenderPipelineManager.beginContextRendering += OnBeginFrameRendering;
-                RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
+#if UNITY_2018
+                UnityEngine.Experimental.Rendering.RenderPipeline.beginFrameRendering += OnBeginFrameRendering;
+                UnityEngine.Experimental.Rendering.RenderPipeline.beginCameraRendering += OnBeginCameraRendering;
+#else
+                UnityEngine.Rendering.RenderPipelineManager.beginFrameRendering += OnBeginFrameRendering;
+                UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
+#endif
             }
-            void OnBeginCameraRendering(ScriptableRenderContext context, Camera camera)
+
+#if UNITY_2018
+            void OnBeginCameraRendering(Camera camera)
+#else
+            void OnBeginCameraRendering(UnityEngine.Rendering.ScriptableRenderContext context, Camera camera)
+#endif
             {
                 if (BeginCameraRendering != null)
                     BeginCameraRendering(camera);
             }
 
-            void OnBeginFrameRendering(ScriptableRenderContext context, List<Camera> cameras)
+#if UNITY_2018
+            void OnBeginFrameRendering(Camera[] cameras)
+#else
+            void OnBeginFrameRendering(UnityEngine.Rendering.ScriptableRenderContext context, Camera[] cameras)
+#endif
             {
                 if (BeginFrameRendering != null)
                     BeginFrameRendering(cameras);
-            }
-
-            public Camera CreateNonOccludingSimulatorCamera(Camera mainCamera, string name, float depth, int cullingMask)
-            {
-                var cameraObject = new GameObject(name);
-                var notOccludingCamera = cameraObject.AddComponent<Camera>();
-                cameraObject.transform.SetParent(mainCamera.transform, false);
-                notOccludingCamera.clearFlags = CameraClearFlags.SolidColor;
-                notOccludingCamera.backgroundColor = Color.black;
-                notOccludingCamera.depth = depth;
-                notOccludingCamera.cullingMask = cullingMask;
-                notOccludingCamera.allowHDR = mainCamera.allowHDR;
-
-#if UNITY_RENDER_PIPELINES_UNIVERSAL
-                if (VuforiaRuntimeUtilities.IsUsingBuiltInRenderPipeline())
-                    return notOccludingCamera;
-
-                var mainCameraData = mainCamera.GetUniversalAdditionalCameraData();
-                mainCameraData.renderType = CameraRenderType.Overlay;
-                var notOccludingCameraData = notOccludingCamera.GetUniversalAdditionalCameraData();
-                notOccludingCameraData.renderType = CameraRenderType.Base;
-                notOccludingCameraData.allowHDROutput = mainCameraData.allowHDROutput;
-
-                notOccludingCameraData.cameraStack.Add(mainCamera);
-#endif
-
-                return notOccludingCamera;
             }
         }
 
         class UnityXRBridge : IUnityXRBridge
         {
-#if UNITY_XR_OPENXR
-            XROrigin mXROrigin;
-#endif
-
             public UnityXRBridge()
             {
                 RegisterCallbacks();
@@ -164,7 +131,8 @@ namespace Vuforia.UnityRuntimeCompiled
 
             void RegisterCallbacks()
             {
-#if RUNTIME_WSA && UNITY_XR_OPENXR
+#if RUNTIME_WSA && OPEN_XR_ENABLED
+
                 var xrSettings = XRGeneralSettings.Instance;
                 var xrManager = xrSettings.Manager;
                 var xrLoader = xrManager.activeLoader;
@@ -180,39 +148,16 @@ namespace Vuforia.UnityRuntimeCompiled
 
             public bool IsOpenXREnabled()
             {
-#if UNITY_XR_OPENXR
-                return XRGeneralSettings.Instance?.AssignedSettings?.activeLoader is OpenXRLoader;
+#if RUNTIME_WSA && OPEN_XR_ENABLED
+                return true;
 #else
                 return false;
 #endif
             }
 
-            public Vector3 GetXROriginOffset()
-            {
-#if UNITY_XR_OPENXR
-                if (mXROrigin == null)
-                {
-                    mXROrigin = Object.FindFirstObjectByType<XROrigin>();
-                }
-
-                if (mXROrigin != null)
-                {
-                    // The offset is based on the world-space position of the XROrigin GameObject
-                    var xrOriginTransform = mXROrigin.transform;
-                    var offset = xrOriginTransform.position;
-                    // The Y component of the XROrigin's local position is replaced at runtime by the CameraYOffset,
-                    // so the Y value of the actual XROrigin world position at runtime is given by the position of
-                    // the XROrigin's parent object (diff between XROrigin world and local positions) and the CameraYOffset
-                    offset.y = xrOriginTransform.position.y - xrOriginTransform.localPosition.y + mXROrigin.CameraYOffset;
-                    return offset;
-                }
-#endif
-                return Vector3.zero;
-            }
-
             public IntPtr GetHoloLensSpatialCoordinateSystemPtr()
             {
-#if RUNTIME_WSA && MICROSOFT_MIXEDREALITY_OPENXR
+#if RUNTIME_WSA && OPEN_XR_ENABLED
                 // This method returns null for a short amount of time during initialization.
                 // On HoloLens we attempt the configuration of the SceneCoordinateSystem until 
                 // a non-null value is returned.
@@ -225,6 +170,10 @@ namespace Vuforia.UnityRuntimeCompiled
                 }
                 
                 return Marshal.GetIUnknownForObject(sceneCoordinateSystem);
+#elif RUNTIME_WSA && WINDOWS_XR_ENABLED
+                return UnityEngine.XR.WindowsMR.WindowsMREnvironment.OriginSpatialCoordinateSystem;
+#elif RUNTIME_WSA && !UNITY_2020_1_OR_NEWER
+                return UnityEngine.XR.WSA.WorldManager.GetNativeISpatialCoordinateSystemPtr();
 #else
                 Debug.LogError("Failed to get HoloLens Spatial Coordinate System. " +
                                "Please include the appropriate XR Plugin package into your project.");
@@ -234,24 +183,28 @@ namespace Vuforia.UnityRuntimeCompiled
 
             public bool IsHolographicDevice()
             {
-#if RUNTIME_WSA && (MICROSOFT_MIXEDREALITY_OPENXR || UNITY_XR_OPENXR)
+#if RUNTIME_WSA && (WINDOWS_XR_ENABLED || OPEN_XR_ENABLED)
                 var xrDisplaySubsystems = new List<XRDisplaySubsystem>();
-                SubsystemManager.GetSubsystems(xrDisplaySubsystems);
+                SubsystemManager.GetInstances(xrDisplaySubsystems);
 
                 foreach (var xrDisplay in xrDisplaySubsystems)
                 {
                     if (xrDisplay.running && !xrDisplay.displayOpaque)
                         return true;
                 }
-#endif
                 return false;
+#elif RUNTIME_WSA && !UNITY_2020_1_OR_NEWER
+                return XRDevice.isPresent && !UnityEngine.XR.WSA.HolographicSettings.IsDisplayOpaque;
+#else
+                return false;
+#endif
             }
 
             public void SetFocusPointForFrame(Vector3 position, Vector3 normal)
             {
-#if RUNTIME_WSA && (MICROSOFT_MIXEDREALITY_OPENXR || UNITY_XR_OPENXR)
+#if RUNTIME_WSA && (WINDOWS_XR_ENABLED || OPEN_XR_ENABLED)
                 var xrDisplaySubsystems = new List<XRDisplaySubsystem>();
-                SubsystemManager.GetSubsystems(xrDisplaySubsystems);
+                SubsystemManager.GetInstances(xrDisplaySubsystems);
 
                 foreach (var xrDisplay in xrDisplaySubsystems)
                 {
@@ -264,7 +217,7 @@ namespace Vuforia.UnityRuntimeCompiled
 #endif
             }
 
-#if RUNTIME_WSA && UNITY_XR_OPENXR
+#if RUNTIME_WSA && OPEN_XR_ENABLED
             void TrackingOriginUpdated(XRInputSubsystem inputSubsystem)
             {
                 OnTrackingOriginUpdated?.Invoke();

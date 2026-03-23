@@ -1,8 +1,8 @@
 ﻿/*===============================================================================
-Copyright (c) 2025 PTC Inc. and/or Its Subsidiary Companies. All Rights Reserved.
+Copyright (c) 2019 PTC Inc. All Rights Reserved.
 
 Confidential and Proprietary - Protected under copyright and other laws.
-Vuforia is a trademark of PTC Inc., registered in the United States and other
+Vuforia is a trademark of PTC Inc., registered in the United States and other 
 countries.
 ===============================================================================*/
 
@@ -24,7 +24,7 @@ namespace Vuforia.EditorClasses
 
         WorldCenterMode mWorldCenterMode;
 
-        protected virtual void OnEnable()
+        void OnEnable()
         {
             // Setup the SerializedProperties.
             mStatusFilterProp = serializedObject.FindProperty("StatusFilter");
@@ -33,7 +33,7 @@ namespace Vuforia.EditorClasses
             mOnTargetFoundProp = serializedObject.FindProperty("OnTargetFound");
             mOnTargetLostProp = serializedObject.FindProperty("OnTargetLost");
 
-            var vuforiaBehaviours = FindObjectsByType<VuforiaBehaviour>(FindObjectsSortMode.None);
+            var vuforiaBehaviours = FindObjectsOfType<VuforiaBehaviour>();
 
             if (vuforiaBehaviours.All(vb => vb.WorldCenterMode == WorldCenterMode.DEVICE)) // multiple VuforiaBehaviours is not supported, but if there are, remain on the strict side for enabling smoothing
                 mWorldCenterMode = WorldCenterMode.DEVICE;

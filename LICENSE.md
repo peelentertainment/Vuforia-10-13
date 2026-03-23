@@ -1,6 +1,6 @@
 ** Vuforia Engine **
 
-Copyright (c) 2010-2025 PTC Inc.
+Copyright (c) 2010-2023 PTC Inc.
 All Rights Reserved.
 
 To view the Vuforia Developer Agreement, go to: https://developer.vuforia.com/legal/vuforia-developer-agreement
