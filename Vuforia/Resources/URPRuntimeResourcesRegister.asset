@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -290115117, guid: 8a9a760f95896c34689febc965510927, type: 3}
+  m_Script: {fileID: -290115117, guid: e677d83e654e5ea4d8a8c30f8702378d, type: 3}
   m_Name: URPRuntimeResourcesRegister
   m_EditorClassIdentifier: 
   mBarcodeOutlineMaterials:

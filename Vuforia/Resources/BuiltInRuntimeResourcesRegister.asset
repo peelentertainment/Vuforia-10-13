@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -290115117, guid: 8a9a760f95896c34689febc965510927, type: 3}
+  m_Script: {fileID: -290115117, guid: e677d83e654e5ea4d8a8c30f8702378d, type: 3}
   m_Name: BuiltInRuntimeResourcesRegister
   m_EditorClassIdentifier: 
   mBarcodeOutlineMaterials:
@@ -29,6 +29,7 @@ MonoBehaviour:
   mDefaultValidationIconUndecidableMaterials:
   - {fileID: 2100000, guid: b88cf59c959364691a622e3c8d859d8d, type: 2}
   mDepthContourMaterials:
+  - {fileID: 2100000, guid: 36b1f386c1720c94889ac11ac9c8c6d1, type: 2}
   - {fileID: 2100000, guid: 6e8673f633b39455f85abe44f8266dd9, type: 2}
   mDepthMaskMaterials:
   - {fileID: 2100000, guid: 36b1f386c1720c94889ac11ac9c8c6d1, type: 2}
